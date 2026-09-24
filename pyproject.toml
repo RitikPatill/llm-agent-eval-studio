@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agenteval"
+version = "0.1.0"
+description = "Lightweight local-first evaluation framework for tool-calling LLM agents"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dependencies = [
+    "anthropic==0.40.0",
+    "openai==1.59.2",
+    "fastapi==0.115.6",
+    "uvicorn[standard]==0.32.1",
+    "pyyaml==6.0.2",
+    "rich==13.9.4",
+    "pydantic==2.10.4",
+]
+
+[project.scripts]
+agenteval = "agenteval.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
