@@ -14,6 +14,13 @@ It's intentionally small — the value is in the pattern, not the size.
 
 ## Status
 
+**M4 — CLI with rich output + SQLite persistence complete.**
+
+- `src/agenteval/cli.py`: `agenteval run <tasks_dir>` loads all YAML tasks, prints a `rich` Table with per-task pass/fail/score, and persists the run to SQLite; `agenteval list` shows past runs
+- `src/agenteval/db.py`: SQLite persistence layer using stdlib `sqlite3` — `runs` and `task_results` tables, `init_db`, `insert_run`, `insert_task_result`, `list_runs`
+- 8 new tests in `tests/test_db.py` and `tests/test_cli.py` — all pass (no live API calls)
+- 30 total tests pass (`pytest tests/`)
+
 **M3 — eval runner + scorers complete.**
 
 - `src/agenteval/runner.py`: `AgentRunner` with Anthropic `tool_use` and OpenAI function-calling agentic loops; `TaskResult` dataclass with score breakdown
@@ -36,11 +43,11 @@ It's intentionally small — the value is in the pattern, not the size.
 - All runtime dependencies pinned in `requirements.txt`; dev dependencies (`pytest`, `pytest-cov`) in `requirements-dev.txt`
 - Smoke tests pass: package importable, version string asserted (`tests/test_scaffold.py`)
 
-Store and dashboard are planned for M4–M5 — see Architecture below.
+The FastAPI dashboard is planned for M5 — see Architecture below.
 
 ## Quickstart
 
-> ⚠️ Quickstart commands are fully operational after M4.
+Quickstart commands are fully operational as of M4.
 
 ```bash
 # 1. Clone and install
@@ -55,8 +62,8 @@ export ANTHROPIC_API_KEY=sk-ant-...   # or OPENAI_API_KEY for OpenAI
 # 3. Run the built-in sample tasks
 agenteval run tasks/
 
-# 4. (Optional) Launch the dashboard
-agenteval serve
+# 4. (M5 — not yet available) Launch the dashboard
+# agenteval serve
 # Open http://localhost:8000
 ```
 
@@ -75,15 +82,15 @@ max_turns: 3
 
 ```
 src/agenteval/
-├── __init__.py       # package version                        [M1 - exists]
-├── __main__.py       # CLI entry point stub                   [M1 - exists]
-├── py.typed          # PEP 561 marker                        [M1 - exists]
-├── schema.py         # TaskDefinition Pydantic model, load_task()  (M2)
-├── tools.py          # ToolExecutor with four mock tools            (M2)
-├── runner.py         # Anthropic + OpenAI runners, TaskResult        (M3 ✓)
-├── scorers.py        # Exact-match, keyword, turn-penalty           (M3 ✓)
-├── store.py          # SQLite persistence                     (M4)
-├── cli.py            # rich table output, run/serve commands  (M4)
+├── __init__.py       # package version + exports              [M1 ✓]
+├── __main__.py       # CLI entry point                        [M1 ✓]
+├── py.typed          # PEP 561 marker                        [M1 ✓]
+├── schema.py         # TaskDefinition Pydantic model, load_task()  [M2 ✓]
+├── tools.py          # ToolExecutor with four mock tools            [M2 ✓]
+├── runner.py         # Anthropic + OpenAI runners, TaskResult       [M3 ✓]
+├── scorers.py        # Exact-match, keyword, turn-penalty          [M3 ✓]
+├── db.py             # SQLite persistence (runs + task_results)    [M4 ✓]
+├── cli.py            # rich table output, run/list commands        [M4 ✓]
 └── dashboard.py      # FastAPI app + HTML templates           (M5)
 
 tasks/sample/         # 10 sample YAML task files                 (M2+M3 ✓)
@@ -100,7 +107,7 @@ requirements-dev.txt  # pinned dev deps (pytest, pytest-cov)   [M1 - exists]
 | M1 | Repo scaffold, package layout, pinned deps, smoke tests | **done** |
 | M2 | Pydantic task/result schema, YAML loader, mock tools, sample tasks | **done** |
 | M3 | Anthropic + OpenAI runners, exact-match + keyword scorer | **done** |
-| M4 | SQLite store, `agenteval run` CLI, rich scorecard table | planned |
+| M4 | SQLite store, `agenteval run` CLI, rich scorecard table | **done** |
 | M5 | FastAPI dashboard, HTML results view, `agenteval serve` | planned |
 
 ## License
