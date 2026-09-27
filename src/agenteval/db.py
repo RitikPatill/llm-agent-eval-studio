@@ -88,3 +88,24 @@ def insert_task_result(conn: sqlite3.Connection, run_id: str, result: TaskResult
 def list_runs(conn: sqlite3.Connection) -> list[dict]:
     cursor = conn.execute("SELECT * FROM runs ORDER BY started_at DESC")
     return [dict(row) for row in cursor.fetchall()]
+
+
+def get_run(conn: sqlite3.Connection, run_id: str) -> dict | None:
+    """Return the runs row for run_id, or None if not found."""
+    cursor = conn.execute("SELECT * FROM runs WHERE run_id = ?", (run_id,))
+    row = cursor.fetchone()
+    return dict(row) if row is not None else None
+
+
+def list_task_results_for_run(conn: sqlite3.Connection, run_id: str) -> list[dict]:
+    """Return all task_results rows for run_id, ordered by id ASC."""
+    cursor = conn.execute(
+        "SELECT * FROM task_results WHERE run_id = ? ORDER BY id ASC", (run_id,)
+    )
+    rows = []
+    for row in cursor.fetchall():
+        d = dict(row)
+        d["tool_calls_made"] = json.loads(d["tool_calls_made"])
+        d["score_breakdown"] = json.loads(d["score_breakdown"])
+        rows.append(d)
+    return rows

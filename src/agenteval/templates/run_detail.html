@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgentEval — Run {{ run.run_id[:8] }}</title>
+  <style>
+    body { font-family: monospace; margin: 2rem; background: #f8f8f8; color: #222; }
+    h1, h2 { margin-bottom: 0.5rem; }
+    .meta { background: #fff; border: 1px solid #ddd; padding: 1rem; margin-bottom: 1.5rem; display: inline-block; }
+    .meta p { margin: 0.25rem 0; }
+    table { border-collapse: collapse; width: 100%; background: #fff; font-size: 0.9rem; }
+    th { background: #333; color: #fff; padding: 0.5rem 0.75rem; text-align: left; }
+    td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #ddd; vertical-align: top; max-width: 200px; word-break: break-word; }
+    tr:nth-child(even) td { background: #f0f0f0; }
+    .pass { color: green; font-weight: bold; }
+    .fail { color: red; font-weight: bold; }
+    a { color: #0066cc; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .back { margin-bottom: 1rem; display: block; }
+  </style>
+</head>
+<body>
+  <a class="back" href="/">&larr; Back to runs</a>
+  <h1>Run {{ run.run_id[:8] }}</h1>
+  <div class="meta">
+    <p><strong>Run ID:</strong> {{ run.run_id }}</p>
+    <p><strong>Provider:</strong> {{ run.provider }}</p>
+    <p><strong>Model:</strong> {{ run.model }}</p>
+    <p><strong>Started At:</strong> {{ run.started_at[:19] }}</p>
+    <p><strong>Aggregate Score:</strong> {{ "%.2f"|format(run.aggregate_score) }}</p>
+    <p><strong>Passed:</strong> {{ run.passed_tasks }} / {{ run.total_tasks }}</p>
+  </div>
+
+  <h2>Task Results</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Task ID</th>
+        <th>Pass</th>
+        <th>Score</th>
+        <th>Tools Expected</th>
+        <th>Tools Made</th>
+        <th>Turns</th>
+        <th>Tool Match</th>
+        <th>Keyword</th>
+        <th>Turn Penalty</th>
+        <th>Final Output</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for tr in task_results %}
+      <tr>
+        <td>{{ tr.task_id }}</td>
+        <td class="{% if tr.passed %}pass{% else %}fail{% endif %}">
+          {% if tr.passed %}PASS{% else %}FAIL{% endif %}
+        </td>
+        <td>{{ "%.2f"|format(tr.score) }}</td>
+        <td>—</td>
+        <td>{{ tr.tool_calls_made | join(", ") or "—" }}</td>
+        <td>{{ tr.turns_used }}</td>
+        <td>{{ tr.score_breakdown.get("tool_match", "—") }}</td>
+        <td>{{ tr.score_breakdown.get("keyword", "—") }}</td>
+        <td>{{ tr.score_breakdown.get("turn_penalty", "—") }}</td>
+        <td>{{ tr.final_output[:120] }}{% if tr.final_output|length > 120 %}…{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>

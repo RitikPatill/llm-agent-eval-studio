@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgentEval Dashboard</title>
+  <style>
+    body { font-family: monospace; margin: 2rem; background: #f8f8f8; color: #222; }
+    h1 { margin-bottom: 1rem; }
+    table { border-collapse: collapse; width: 100%; background: #fff; }
+    th { background: #333; color: #fff; padding: 0.5rem 0.75rem; text-align: left; }
+    td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #ddd; }
+    tr:nth-child(even) td { background: #f0f0f0; }
+    a { color: #0066cc; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .empty { color: #888; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>AgentEval — Run History</h1>
+  {% if runs %}
+  <table>
+    <thead>
+      <tr>
+        <th>Run ID</th>
+        <th>Provider</th>
+        <th>Model</th>
+        <th>Tasks Dir</th>
+        <th>Started At</th>
+        <th>Passed / Total</th>
+        <th>Avg Score</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for run in runs %}
+      <tr>
+        <td><a href="/run/{{ run.run_id }}">{{ run.run_id[:8] }}</a></td>
+        <td>{{ run.provider }}</td>
+        <td>{{ run.model }}</td>
+        <td>{{ run.tasks_dir }}</td>
+        <td>{{ run.started_at[:19] }}</td>
+        <td>{{ run.passed_tasks }} / {{ run.total_tasks }}</td>
+        <td>{{ "%.2f"|format(run.aggregate_score) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No runs yet — run <code>agenteval run tasks/</code></p>
+  {% endif %}
+</body>
+</html>
