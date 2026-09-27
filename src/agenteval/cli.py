@@ -31,6 +31,12 @@ def build_parser() -> argparse.ArgumentParser:
     list_p.add_argument("--db", default="agenteval.db", help="SQLite database path")
     list_p.set_defaults(func=cmd_list)
 
+    serve_p = sub.add_parser("serve", help="Start the dashboard on http://localhost:8000")
+    serve_p.add_argument("--db", default="agenteval.db")
+    serve_p.add_argument("--host", default="127.0.0.1")
+    serve_p.add_argument("--port", type=int, default=8000)
+    serve_p.set_defaults(func=cmd_serve)
+
     return parser
 
 
@@ -146,6 +152,13 @@ def cmd_list(args: argparse.Namespace) -> None:
         )
 
     console.print(table)
+
+
+def cmd_serve(args: argparse.Namespace) -> None:
+    import uvicorn
+    from agenteval.server import create_app
+    app = create_app(db_path=args.db)
+    uvicorn.run(app, host=args.host, port=args.port)
 
 
 def main() -> None:

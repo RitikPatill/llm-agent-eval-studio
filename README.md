@@ -14,6 +14,15 @@ It's intentionally small — the value is in the pattern, not the size.
 
 ## Status
 
+**M5 — FastAPI dashboard complete.**
+
+- `src/agenteval/server.py`: `create_app(db_path)` factory builds a FastAPI app with two routes: `GET /` (run history table) and `GET /run/{run_id}` (per-task drill-down with prompt, tools made vs expected, score breakdown)
+- `src/agenteval/templates/`: Jinja2 HTML templates — `index.html` and `run_detail.html` — plain HTML5, no JS framework, inline styling
+- `src/agenteval/db.py`: two new read-only helpers — `get_run` and `list_task_results_for_run` (parses JSON fields into Python objects)
+- `agenteval serve` CLI command: starts uvicorn on `127.0.0.1:8000` (configurable via `--host`, `--port`, `--db`)
+- 4 new tests in `tests/test_server.py` — all pass
+- 34 total tests pass (`pytest tests/`)
+
 **M4 — CLI with rich output + SQLite persistence complete.**
 
 - `src/agenteval/cli.py`: `agenteval run <tasks_dir>` loads all YAML tasks, prints a `rich` Table with per-task pass/fail/score, and persists the run to SQLite; `agenteval list` shows past runs
@@ -43,11 +52,7 @@ It's intentionally small — the value is in the pattern, not the size.
 - All runtime dependencies pinned in `requirements.txt`; dev dependencies (`pytest`, `pytest-cov`) in `requirements-dev.txt`
 - Smoke tests pass: package importable, version string asserted (`tests/test_scaffold.py`)
 
-The FastAPI dashboard is planned for M5 — see Architecture below.
-
 ## Quickstart
-
-Quickstart commands are fully operational as of M4.
 
 ```bash
 # 1. Clone and install
@@ -62,8 +67,8 @@ export ANTHROPIC_API_KEY=sk-ant-...   # or OPENAI_API_KEY for OpenAI
 # 3. Run the built-in sample tasks
 agenteval run tasks/
 
-# 4. (M5 — not yet available) Launch the dashboard
-# agenteval serve
+# 4. Launch the dashboard
+agenteval serve
 # Open http://localhost:8000
 ```
 
@@ -90,8 +95,9 @@ src/agenteval/
 ├── runner.py         # Anthropic + OpenAI runners, TaskResult       [M3 ✓]
 ├── scorers.py        # Exact-match, keyword, turn-penalty          [M3 ✓]
 ├── db.py             # SQLite persistence (runs + task_results)    [M4 ✓]
-├── cli.py            # rich table output, run/list commands        [M4 ✓]
-└── dashboard.py      # FastAPI app + HTML templates           (M5)
+├── cli.py            # rich table output, run/list/serve commands  [M4+M5 ✓]
+├── server.py         # FastAPI create_app factory                  [M5 ✓]
+└── templates/        # Jinja2 HTML templates (index, run_detail)   [M5 ✓]
 
 tasks/sample/         # 10 sample YAML task files                 (M2+M3 ✓)
 tests/                # pytest suite                           [M1 - exists]
@@ -108,7 +114,7 @@ requirements-dev.txt  # pinned dev deps (pytest, pytest-cov)   [M1 - exists]
 | M2 | Pydantic task/result schema, YAML loader, mock tools, sample tasks | **done** |
 | M3 | Anthropic + OpenAI runners, exact-match + keyword scorer | **done** |
 | M4 | SQLite store, `agenteval run` CLI, rich scorecard table | **done** |
-| M5 | FastAPI dashboard, HTML results view, `agenteval serve` | planned |
+| M5 | FastAPI dashboard, HTML results view, `agenteval serve` | **done** |
 
 ## License
 
