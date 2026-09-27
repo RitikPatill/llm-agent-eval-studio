@@ -14,6 +14,13 @@ It's intentionally small — the value is in the pattern, not the size.
 
 ## Status
 
+**M2 — task schema + mock tool executor complete.**
+
+- `src/agenteval/schema.py`: `TaskDefinition` Pydantic v2 model + `load_task(path)` YAML loader
+- `src/agenteval/tools.py`: `ToolExecutor` with four mock tools — `read_file`, `write_file`, `calculator`, `web_search_stub`
+- `tasks/sample/`: three example YAML task files (calculator, file round-trip, web search)
+- 9 unit tests in `tests/test_schema.py` — all pass (`pytest tests/test_schema.py`)
+
 **M1 — scaffold complete.**
 
 - `src/agenteval/` package installs cleanly via `pip install -e .` (src layout, `pyproject.toml`, PEP 561 `py.typed` marker)
@@ -21,7 +28,7 @@ It's intentionally small — the value is in the pattern, not the size.
 - All runtime dependencies pinned in `requirements.txt`; dev dependencies (`pytest`, `pytest-cov`) in `requirements-dev.txt`
 - Smoke tests pass: package importable, version string asserted (`tests/test_scaffold.py`)
 
-Eval logic (schema, runner, scorer, store, dashboard) is planned for M2–M5 — see Architecture below.
+Runner, scorer, store, and dashboard are planned for M3–M5 — see Architecture below.
 
 ## Quickstart
 
@@ -48,11 +55,11 @@ agenteval serve
 A task YAML looks like this:
 
 ```yaml
-id: calculator_basic
-prompt: "What is 17 multiplied by 43?"
+id: calc_basic
+prompt: "What is 17 multiplied by 6?"
 tools_available: [calculator]
 expected_tool_calls: [calculator]
-expected_output_keywords: ["731"]
+expected_output_keywords: ["102"]
 max_turns: 3
 ```
 
@@ -63,14 +70,15 @@ src/agenteval/
 ├── __init__.py       # package version                        [M1 - exists]
 ├── __main__.py       # CLI entry point stub                   [M1 - exists]
 ├── py.typed          # PEP 561 marker                        [M1 - exists]
-├── schema.py         # Pydantic models for tasks and results  (M2)
-├── runner.py         # Anthropic + OpenAI runners             (M3)
+├── schema.py         # TaskDefinition Pydantic model, load_task()  (M2)
+├── tools.py          # ToolExecutor with four mock tools            (M2)
+├── runner.py         # Anthropic + OpenAI runners                  (M3)
 ├── scorer.py         # Exact-match, keyword, turn-penalty     (M3)
 ├── store.py          # SQLite persistence                     (M4)
 ├── cli.py            # rich table output, run/serve commands  (M4)
 └── dashboard.py      # FastAPI app + HTML templates           (M5)
 
-tasks/                # built-in sample YAML task suite        (M2)
+tasks/sample/         # three sample YAML task files               (M2)
 tests/                # pytest suite                           [M1 - exists]
 pyproject.toml        # build config, entry point, deps        [M1 - exists]
 requirements.txt      # pinned runtime deps                    [M1 - exists]
@@ -82,7 +90,7 @@ requirements-dev.txt  # pinned dev deps (pytest, pytest-cov)   [M1 - exists]
 | Milestone | Scope | Status |
 |-----------|-------|--------|
 | M1 | Repo scaffold, package layout, pinned deps, smoke tests | **done** |
-| M2 | Pydantic task/result schema, YAML loader, sample task suite | planned |
+| M2 | Pydantic task/result schema, YAML loader, mock tools, sample tasks | **done** |
 | M3 | Anthropic + OpenAI runners, exact-match + keyword scorer | planned |
 | M4 | SQLite store, `agenteval run` CLI, rich scorecard table | planned |
 | M5 | FastAPI dashboard, HTML results view, `agenteval serve` | planned |

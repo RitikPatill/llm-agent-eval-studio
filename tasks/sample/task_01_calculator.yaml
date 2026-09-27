@@ -1,0 +1,6 @@
+id: calc_basic
+prompt: "What is 17 multiplied by 6?"
+tools_available: [calculator]
+expected_tool_calls: [calculator]
+expected_output_keywords: ["102"]
+max_turns: 3
