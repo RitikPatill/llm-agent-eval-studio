@@ -1,0 +1,6 @@
+id: calc_chain
+prompt: "First calculate 7 * 8, then calculate that result plus 44."
+tools_available: [calculator]
+expected_tool_calls: [calculator, calculator]
+expected_output_keywords: ["100"]
+max_turns: 5

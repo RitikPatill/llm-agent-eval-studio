@@ -1,0 +1,6 @@
+id: verify_math
+prompt: "Is 13 squared equal to 169? Use the calculator to verify."
+tools_available: [calculator]
+expected_tool_calls: [calculator]
+expected_output_keywords: ["169"]
+max_turns: 3

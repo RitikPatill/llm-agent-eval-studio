@@ -1,0 +1,6 @@
+id: calc_percent
+prompt: "What is 15 percent of 240? Use the calculator."
+tools_available: [calculator]
+expected_tool_calls: [calculator]
+expected_output_keywords: ["36"]
+max_turns: 3
