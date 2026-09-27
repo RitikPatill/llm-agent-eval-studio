@@ -1,0 +1,6 @@
+id: web_search_stub
+prompt: "Search the web for 'open source LLM eval frameworks' and summarise the top result."
+tools_available: [web_search_stub]
+expected_tool_calls: [web_search_stub]
+expected_output_keywords: ["eval"]
+max_turns: 3

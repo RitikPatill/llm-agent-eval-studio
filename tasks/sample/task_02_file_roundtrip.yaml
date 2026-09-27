@@ -1,0 +1,6 @@
+id: file_roundtrip
+prompt: "Write 'hello world' to notes.txt, then read it back and confirm the content."
+tools_available: [write_file, read_file]
+expected_tool_calls: [write_file, read_file]
+expected_output_keywords: ["hello world"]
+max_turns: 5
