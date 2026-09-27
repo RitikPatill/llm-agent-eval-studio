@@ -1,0 +1,6 @@
+id: write_then_search
+prompt: "Write 'The answer is 42' to result.txt, then read it back."
+tools_available: [write_file, read_file]
+expected_tool_calls: [write_file, read_file]
+expected_output_keywords: ["42"]
+max_turns: 4

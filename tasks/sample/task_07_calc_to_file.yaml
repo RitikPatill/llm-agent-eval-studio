@@ -1,0 +1,6 @@
+id: calc_to_file
+prompt: "Calculate 99 * 99, then write the result to output.txt."
+tools_available: [calculator, write_file]
+expected_tool_calls: [calculator, write_file]
+expected_output_keywords: ["9801"]
+max_turns: 4

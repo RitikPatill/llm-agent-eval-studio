@@ -14,6 +14,14 @@ It's intentionally small — the value is in the pattern, not the size.
 
 ## Status
 
+**M3 — eval runner + scorers complete.**
+
+- `src/agenteval/runner.py`: `AgentRunner` with Anthropic `tool_use` and OpenAI function-calling agentic loops; `TaskResult` dataclass with score breakdown
+- `src/agenteval/scorers.py`: three scorer functions (`score_tool_calls`, `score_keywords`, `score_turn_penalty`) + `compute_score` aggregator (weighted: `tool_match*0.5 + keyword*0.5 - turn_penalty`, clamped to `[0.0, 1.0]`)
+- `tasks/sample/`: 10 example YAML tasks including multi-step calculator chains and mixed-tool flows
+- 11 unit tests in `tests/test_runner.py` — all pass; runner tests use mocked API clients (no live calls required)
+- 22 total tests pass (`pytest tests/`)
+
 **M2 — task schema + mock tool executor complete.**
 
 - `src/agenteval/schema.py`: `TaskDefinition` Pydantic v2 model + `load_task(path)` YAML loader
@@ -28,7 +36,7 @@ It's intentionally small — the value is in the pattern, not the size.
 - All runtime dependencies pinned in `requirements.txt`; dev dependencies (`pytest`, `pytest-cov`) in `requirements-dev.txt`
 - Smoke tests pass: package importable, version string asserted (`tests/test_scaffold.py`)
 
-Runner, scorer, store, and dashboard are planned for M3–M5 — see Architecture below.
+Store and dashboard are planned for M4–M5 — see Architecture below.
 
 ## Quickstart
 
@@ -72,13 +80,13 @@ src/agenteval/
 ├── py.typed          # PEP 561 marker                        [M1 - exists]
 ├── schema.py         # TaskDefinition Pydantic model, load_task()  (M2)
 ├── tools.py          # ToolExecutor with four mock tools            (M2)
-├── runner.py         # Anthropic + OpenAI runners                  (M3)
-├── scorer.py         # Exact-match, keyword, turn-penalty     (M3)
+├── runner.py         # Anthropic + OpenAI runners, TaskResult        (M3 ✓)
+├── scorers.py        # Exact-match, keyword, turn-penalty           (M3 ✓)
 ├── store.py          # SQLite persistence                     (M4)
 ├── cli.py            # rich table output, run/serve commands  (M4)
 └── dashboard.py      # FastAPI app + HTML templates           (M5)
 
-tasks/sample/         # three sample YAML task files               (M2)
+tasks/sample/         # 10 sample YAML task files                 (M2+M3 ✓)
 tests/                # pytest suite                           [M1 - exists]
 pyproject.toml        # build config, entry point, deps        [M1 - exists]
 requirements.txt      # pinned runtime deps                    [M1 - exists]
@@ -91,7 +99,7 @@ requirements-dev.txt  # pinned dev deps (pytest, pytest-cov)   [M1 - exists]
 |-----------|-------|--------|
 | M1 | Repo scaffold, package layout, pinned deps, smoke tests | **done** |
 | M2 | Pydantic task/result schema, YAML loader, mock tools, sample tasks | **done** |
-| M3 | Anthropic + OpenAI runners, exact-match + keyword scorer | planned |
+| M3 | Anthropic + OpenAI runners, exact-match + keyword scorer | **done** |
 | M4 | SQLite store, `agenteval run` CLI, rich scorecard table | planned |
 | M5 | FastAPI dashboard, HTML results view, `agenteval serve` | planned |
 

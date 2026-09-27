@@ -1,0 +1,6 @@
+id: sum_chain
+prompt: "Calculate (45 + 55), then multiply that result by 2."
+tools_available: [calculator]
+expected_tool_calls: [calculator, calculator]
+expected_output_keywords: ["200"]
+max_turns: 5

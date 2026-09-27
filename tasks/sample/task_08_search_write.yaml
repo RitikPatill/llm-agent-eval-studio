@@ -1,0 +1,6 @@
+id: search_write
+prompt: "Search for 'Python eval frameworks' and write the top result to search_result.txt."
+tools_available: [web_search_stub, write_file]
+expected_tool_calls: [web_search_stub, write_file]
+expected_output_keywords: ["written", "search_result.txt"]
+max_turns: 4
