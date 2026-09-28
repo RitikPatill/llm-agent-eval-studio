@@ -1,121 +1,138 @@
-# agenteval
+# LLM Agent Eval Studio
 
-A lightweight, local-first evaluation framework for tool-calling LLM agents.
+> Self-hostable eval harness for tool-calling LLM agents — define tasks in YAML, run against Claude/GPT-4, get a scored report.
+
+![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue) ![MIT](https://img.shields.io/badge/license-MIT-green) ![tests passing](https://img.shields.io/badge/tests-34%20passing-brightgreen)
+
+<!-- TODO: replace with a 5-10 second demo gif. Record with ScreenToGif on
+     Windows or peek on macOS. Save to docs/demo.gif and update path here. -->
+![demo](docs/demo.gif)
 
 ## What it is
 
-Write task definitions in YAML (input prompt, expected tool calls, expected output, scoring rubric), point the runner at any OpenAI- or Anthropic-compatible model, and get a structured scorecard back — both as a terminal table (via `rich`) and as a persistent SQLite store queryable through a minimal FastAPI dashboard.
+`agenteval` is a local-first evaluation framework for tool-calling LLM agents. You write task definitions in YAML — specifying the prompt, which tools the agent may call, which tool calls you expect, and what keywords should appear in the final answer — then point the runner at an Anthropic or OpenAI model. It drives the agent through each task, scores the result against your rubric, and prints a `rich` scorecard table to the terminal.
 
-## Why it exists
-
-Every serious AI team runs evals, but hosted eval platforms (Braintrust, LangSmith, etc.) lock you in and cost money. Open-source alternatives like `evals` (OpenAI) are complex to extend. This project gives a developer a **working eval loop in under 5 minutes**: clone, `pip install -r requirements.txt`, drop a YAML file, run one command.
-
-It's intentionally small — the value is in the pattern, not the size.
-
-## Status
-
-**M5 — FastAPI dashboard complete.**
-
-- `src/agenteval/server.py`: `create_app(db_path)` factory builds a FastAPI app with two routes: `GET /` (run history table) and `GET /run/{run_id}` (per-task drill-down with prompt, tools made vs expected, score breakdown)
-- `src/agenteval/templates/`: Jinja2 HTML templates — `index.html` and `run_detail.html` — plain HTML5, no JS framework, inline styling
-- `src/agenteval/db.py`: two new read-only helpers — `get_run` and `list_task_results_for_run` (parses JSON fields into Python objects)
-- `agenteval serve` CLI command: starts uvicorn on `127.0.0.1:8000` (configurable via `--host`, `--port`, `--db`)
-- 4 new tests in `tests/test_server.py` — all pass
-- 34 total tests pass (`pytest tests/`)
-
-**M4 — CLI with rich output + SQLite persistence complete.**
-
-- `src/agenteval/cli.py`: `agenteval run <tasks_dir>` loads all YAML tasks, prints a `rich` Table with per-task pass/fail/score, and persists the run to SQLite; `agenteval list` shows past runs
-- `src/agenteval/db.py`: SQLite persistence layer using stdlib `sqlite3` — `runs` and `task_results` tables, `init_db`, `insert_run`, `insert_task_result`, `list_runs`
-- 8 new tests in `tests/test_db.py` and `tests/test_cli.py` — all pass (no live API calls)
-- 30 total tests pass (`pytest tests/`)
-
-**M3 — eval runner + scorers complete.**
-
-- `src/agenteval/runner.py`: `AgentRunner` with Anthropic `tool_use` and OpenAI function-calling agentic loops; `TaskResult` dataclass with score breakdown
-- `src/agenteval/scorers.py`: three scorer functions (`score_tool_calls`, `score_keywords`, `score_turn_penalty`) + `compute_score` aggregator (weighted: `tool_match*0.5 + keyword*0.5 - turn_penalty`, clamped to `[0.0, 1.0]`)
-- `tasks/sample/`: 10 example YAML tasks including multi-step calculator chains and mixed-tool flows
-- 11 unit tests in `tests/test_runner.py` — all pass; runner tests use mocked API clients (no live calls required)
-- 22 total tests pass (`pytest tests/`)
-
-**M2 — task schema + mock tool executor complete.**
-
-- `src/agenteval/schema.py`: `TaskDefinition` Pydantic v2 model + `load_task(path)` YAML loader
-- `src/agenteval/tools.py`: `ToolExecutor` with four mock tools — `read_file`, `write_file`, `calculator`, `web_search_stub`
-- `tasks/sample/`: three example YAML task files (calculator, file round-trip, web search)
-- 9 unit tests in `tests/test_schema.py` — all pass (`pytest tests/test_schema.py`)
-
-**M1 — scaffold complete.**
-
-- `src/agenteval/` package installs cleanly via `pip install -e .` (src layout, `pyproject.toml`, PEP 561 `py.typed` marker)
-- CLI entry point registered: `agenteval` prints version stub
-- All runtime dependencies pinned in `requirements.txt`; dev dependencies (`pytest`, `pytest-cov`) in `requirements-dev.txt`
-- Smoke tests pass: package importable, version string asserted (`tests/test_scaffold.py`)
+Every run is persisted to a local SQLite database. A minimal FastAPI dashboard (`agenteval serve`) lets you browse run history and drill into per-task results without leaving your machine.
 
 ## Quickstart
 
 ```bash
-# 1. Clone and install
-git clone https://github.com/your-username/llm-agent-eval-studio.git
+git clone https://github.com/RitikPatill/llm-agent-eval-studio.git
 cd llm-agent-eval-studio
+
 python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
 pip install -e .
 
-# 2. Set your API key
+# Set the API key for the provider you want to use
 export ANTHROPIC_API_KEY=sk-ant-...   # or OPENAI_API_KEY for OpenAI
 
-# 3. Run the built-in sample tasks
-agenteval run tasks/
+# Run the 10 built-in sample tasks
+agenteval run tasks/sample/
 
-# 4. Launch the dashboard
+# Launch the results dashboard
 agenteval serve
 # Open http://localhost:8000
 ```
 
-A task YAML looks like this:
+## Usage
+
+Run a task directory against a specific provider and model:
+
+```bash
+agenteval run tasks/sample/ --provider openai --model gpt-4o
+```
+
+The terminal prints a scored table — task ID, pass/fail, tool-match score, keyword score, and turns used. Results land in `agenteval.db` automatically.
+
+To review past runs, `agenteval list` prints a summary table from the database. `agenteval serve` starts the dashboard on `:8000`; the index page lists every run by timestamp and aggregate score, and clicking a run shows the per-task breakdown with the agent's final answer for each task.
+
+To query the dashboard API directly:
+
+```bash
+curl http://localhost:8000/api/runs
+```
+
+## Architecture
+
+```
+┌──────────────────────────────────────────────────────────┐
+│                       CLI  (cli.py)                       │
+│              agenteval run │ list │ serve                 │
+└──────────────┬─────────────────────────────┬─────────────┘
+               │                             │
+               ▼                             ▼
+   ┌───────────────────────┐    ┌───────────────────────┐
+   │    AgentRunner        │    │   FastAPI server      │
+   │    (runner.py)        │    │   (server.py)         │
+   │  Anthropic tool_use   │    │   GET /               │
+   │  OpenAI functions     │    │   GET /run/{id}       │
+   └──────────┬────────────┘    └───────────┬───────────┘
+              │                             │
+   ┌──────────┴────────────┐    ┌───────────┴───────────┐
+   │   ToolExecutor        │    │   SQLite  (db.py)     │
+   │   (tools.py)          │    │   runs + task_results │
+   │   calculator          │    └───────────────────────┘
+   │   read_file           │
+   │   write_file          │    ┌───────────────────────┐
+   │   web_search_stub     │    │   Scorers             │
+   └──────────┬────────────┘    │   (scorers.py)        │
+              │                 │   tool_match · keyword│
+   ┌──────────┴────────────┐    │   turn_penalty        │
+   │   Task YAML           │    └───────────────────────┘
+   │   (schema.py)         │
+   └───────────────────────┘
+```
+
+## Project structure
+
+```
+llm-agent-eval-studio/
+├── src/agenteval/       # package source — CLI, runners, scorers, server, DB
+│   └── templates/       # Jinja2 HTML templates for the FastAPI dashboard
+├── tasks/sample/        # 10 built-in eval tasks in YAML
+├── tests/               # pytest suite (34 tests)
+├── docs/                # demo gif and static assets
+├── scripts/             # dev helpers: install check, demo recording
+├── requirements.txt     # pinned runtime dependencies
+└── pyproject.toml       # package metadata and entry-point declaration
+```
+
+## Adding your own tasks
+
+Create a YAML file anywhere and run it:
 
 ```yaml
-id: calc_basic
-prompt: "What is 17 multiplied by 6?"
+# tasks/my_tasks/addition.yaml
+id: my_addition
+prompt: "What is 42 + 58?"
 tools_available: [calculator]
 expected_tool_calls: [calculator]
-expected_output_keywords: ["102"]
-max_turns: 3
+expected_output_keywords: ["100"]
+max_turns: 2
 ```
 
-## Architecture overview
-
+```bash
+agenteval run tasks/my_tasks/
 ```
-src/agenteval/
-├── __init__.py       # package version + exports              [M1 ✓]
-├── __main__.py       # CLI entry point                        [M1 ✓]
-├── py.typed          # PEP 561 marker                        [M1 ✓]
-├── schema.py         # TaskDefinition Pydantic model, load_task()  [M2 ✓]
-├── tools.py          # ToolExecutor with four mock tools            [M2 ✓]
-├── runner.py         # Anthropic + OpenAI runners, TaskResult       [M3 ✓]
-├── scorers.py        # Exact-match, keyword, turn-penalty          [M3 ✓]
-├── db.py             # SQLite persistence (runs + task_results)    [M4 ✓]
-├── cli.py            # rich table output, run/list/serve commands  [M4+M5 ✓]
-├── server.py         # FastAPI create_app factory                  [M5 ✓]
-└── templates/        # Jinja2 HTML templates (index, run_detail)   [M5 ✓]
 
-tasks/sample/         # 10 sample YAML task files                 (M2+M3 ✓)
-tests/                # pytest suite                           [M1 - exists]
-pyproject.toml        # build config, entry point, deps        [M1 - exists]
-requirements.txt      # pinned runtime deps                    [M1 - exists]
-requirements-dev.txt  # pinned dev deps (pytest, pytest-cov)   [M1 - exists]
-```
+**Scoring:** `tool_match` (weight 0.5) measures whether the expected tool calls were made in order. `keyword` (weight 0.5) checks that all `expected_output_keywords` appear in the final answer. A `turn_penalty` of 0.1 is subtracted per turn beyond the first, clamped at 0.
 
 ## Roadmap
 
-| Milestone | Scope | Status |
-|-----------|-------|--------|
-| M1 | Repo scaffold, package layout, pinned deps, smoke tests | **done** |
-| M2 | Pydantic task/result schema, YAML loader, mock tools, sample tasks | **done** |
-| M3 | Anthropic + OpenAI runners, exact-match + keyword scorer | **done** |
-| M4 | SQLite store, `agenteval run` CLI, rich scorecard table | **done** |
-| M5 | FastAPI dashboard, HTML results view, `agenteval serve` | **done** |
+- [ ] LLM-as-judge scorer: use a second model call to assess open-ended answer quality
+- [ ] Side-by-side multi-model comparison table in the dashboard
+- [ ] Export run results to JSON/CSV for downstream analysis pipelines
+- [ ] Streaming support to capture token-level latency as a scored metric
+- [ ] GitHub Actions workflow for running the eval suite in CI on every push
 
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+---
+
+Built autonomously by [autodev](https://github.com/RitikPatill/autodev),
+a multi-agent orchestrator I designed. Each commit in this repo was
+authored by me; the implementation work was performed by Sonnet under
+the orchestrator's control. Read the orchestrator's README to see how.
