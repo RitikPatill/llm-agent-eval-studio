@@ -1,5 +1,9 @@
 # LLM Agent Eval Studio
 
+
+> **Video walkthrough:** https://youtu.be/qMa1Rnt6EIE
+> **60-second overview:** https://youtu.be/Gu5yKEMlinw
+
 > Self-hostable eval harness for tool-calling LLM agents — define tasks in YAML, run against Claude/GPT-4, get a scored report.
 
 ![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue) ![MIT](https://img.shields.io/badge/license-MIT-green) ![tests passing](https://img.shields.io/badge/tests-34%20passing-brightgreen)
